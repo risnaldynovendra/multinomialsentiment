@@ -23,7 +23,7 @@ class TweetSentimentApp:
         self.sent_analyzer = SentimentIntensityAnalyzer()
         self.positive_words = self.read_word_list('positive_words.txt')
         self.negative_words = self.read_word_list('negative_words.txt')
-        self.neutral_words = self.read_word_list('neutral_words.txt')
+        # self.neutral_words = self.read_word_list('neutral_words.txt')
         self.constructive_words = self.read_word_list('constructive_words.txt')
         self.destructive_words = self.read_word_list('destructive_words.txt')
         self.agitative_words = set(open('agitative_words.txt').read().splitlines())
@@ -44,12 +44,11 @@ class TweetSentimentApp:
         
 
     def analyze_sentiment(self, text):
-        
         sid = SentimentIntensityAnalyzer()
         sentiment_score = sid.polarity_scores(text)['compound']
-        sentiment_tag = 'positive' if sentiment_score > 0 else ('negative' if sentiment_score < 0 else 'neutral')
-        
+        sentiment_tag = 'positive' if sentiment_score > 0 else 'negative'
         return sentiment_score, sentiment_tag
+
     
     def predict_sentiment(self, text):
         
@@ -70,7 +69,7 @@ class TweetSentimentApp:
             elif sentiment_score < 0:
                 return 'negative'
             else:
-                return 'neutral'
+                return 'negative'  # Set to 'negative' for scores equal to 0 as well
         except ValueError:
             return 'Invalid'
     def get_sentiment_score(self, tweet):
@@ -126,8 +125,8 @@ class TweetSentimentApp:
                     mentions.append((username, word, 'positive'))
                 elif word in self.negative_words:
                     mentions.append((username, word, 'negative'))
-                elif word in self.neutral_words:
-                    mentions.append((username, word, 'neutral'))
+                # elif word in self.neutral_words:
+                #     mentions.append((username, word, 'neutral'))
                 # elif word in self.agitative_words:
                 #     mentions.append((username, word, 'agitative'))
         
@@ -169,20 +168,17 @@ class TweetSentimentApp:
 
             blob = TextBlob(tweet)
             for word in blob.words:
-                if word in self.positive_words or word in self.negative_words or word in self.neutral_words:
+                if word in self.positive_words or word in self.negative_words:
                     sentiment = ''
                     if word in self.positive_words:
                         sentiment = 'positive'
                     elif word in self.negative_words:
                         sentiment = 'negative'
-                    else:
-                        sentiment = 'neutral'
-                        
+
                     if username not in user_word_frequency:
                         user_word_frequency[username] = {
                             'positive': {},
                             'negative': {},
-                            'neutral': {}
                         }
                     if word not in user_word_frequency[username][sentiment]:
                         user_word_frequency[username][sentiment][word] = 0
@@ -212,30 +208,26 @@ class TweetSentimentApp:
             blob = TextBlob(tweet)
             positive_count = 0
             negative_count = 0
-            neutral_count = 0
 
             for word in blob.words:
                 if word in self.positive_words:
                     positive_count += 1
                 elif word in self.negative_words:
                     negative_count += 1
-                elif word in self.neutral_words:
-                    neutral_count += 1
 
             if username not in sentiment_percentages:
                 sentiment_percentages[username] = {
                     'positive': 0,
                     'negative': 0,
-                    'neutral': 0
                 }
 
-            total_words = positive_count + negative_count + neutral_count
+            total_words = positive_count + negative_count
             if total_words > 0:
                 sentiment_percentages[username]['positive'] += (positive_count / total_words)
                 sentiment_percentages[username]['negative'] += (negative_count / total_words)
-                sentiment_percentages[username]['neutral'] += (neutral_count / total_words)
 
         return sentiment_percentages
+
 # =============================================================================================
     def find_most_patriotic_politician(self, df):
         politician_sentiment_count = {}
@@ -369,7 +361,7 @@ class TweetSentimentApp:
     # WordCloud Generation
     # ====================================================================================
     def generate_wordclouds_for_each_user(self, dataframe):
-        for sentiment in ['positive', 'negative', 'neutral']:
+        for sentiment in ['positive', 'negative']:
             for username in dataframe['username'].unique():
                 words = self.get_words_by_sentiment(dataframe, username, sentiment)
                 if words:
@@ -421,8 +413,8 @@ class TweetSentimentApp:
             # =========================================================================================
             df['cleaned_text'] = df['tweets'].apply(self.clean_text)
             df['sentiment_score'], df['sentiment_tag'] = zip(*df['cleaned_text'].apply(self.analyze_sentiment))
-            df['predicted_sentiment'] = df['cleaned_text'].apply(self.predict_sentiment)
-            df['predicted_sentiment_label'] = df['predicted_sentiment'].apply(self.sentiment_label)
+            # df['predicted_sentiment'] = df['cleaned_text'].apply(self.predict_sentiment)
+            # df['predicted_sentiment_label'] = df['predicted_sentiment'].apply(self.sentiment_label)
             # positive_percentage = (df['sentiment_tag'] == 'positive').mean() * 100
             st.set_option('deprecation.showPyplotGlobalUse', False)
             plt.figure(figsize=(8, 6))
@@ -434,80 +426,80 @@ class TweetSentimentApp:
             st.write("### Data Content")
             st.dataframe(df)
 
-            df_with_topics = analyzer.perform_topic_modeling_and_analysis(df)
+            # df_with_topics = analyzer.perform_topic_modeling_and_analysis(df)
 
-            most_active_politician, num_tweets = self.find_most_active_politician(df)
+            # most_active_politician, num_tweets = self.find_most_active_politician(df)
 
-            mentions_df = pd.DataFrame(self.analyze_tweets_sentiment(df),columns=['User', 'Mentioned Word', 'Sentiment'])
+            # mentions_df = pd.DataFrame(self.analyze_tweets_sentiment(df),columns=['User', 'Mentioned Word', 'Sentiment'])
 
-            # Display the combined DataFrame using st.dataframe()
-            st.write("### Positive, Negative, Neutral Mentions by each Politician")
-            st.dataframe(mentions_df)
-            # Plot word frequency for each user
-            self.plot_word_frequency_by_user(df)
-            st.write('### Sentiment Analysis Results')
-            st.write(df)
-            # Display positive, negative, neutral sentiment graph
-            # self.plot_sentiments_by_politician(df)
-            self.calculate_positive_sentiment_percentage(df)
+            # # Display the combined DataFrame using st.dataframe()
+            # st.write("### Positive, Negative, Neutral Mentions by each Politician")
+            # st.dataframe(mentions_df)
+            # # Plot word frequency for each user
+            # self.plot_word_frequency_by_user(df)
+            # st.write('### Sentiment Analysis Results')
+            # st.write(df)
+            # # Display positive, negative, neutral sentiment graph
+            # # self.plot_sentiments_by_politician(df)
+            # self.calculate_positive_sentiment_percentage(df)
             
-            # Calculate sentiment percentages
-            sentiment_percentages = self.calculate_sentiment_percentages(df)
-            # Convert sentiment percentages to dataframe
-            sentiment_percentages_df = pd.DataFrame(sentiment_percentages).transpose()
-            # Plot sentiment percentages
-            sentiment_percentages_df.plot(kind='bar', figsize=(10, 6))
-            plt.xlabel('Politician')
-            plt.ylabel('Percentage of Sentiments')
-            plt.title('Sentiments')
-            plt.xticks(rotation=45)
-            st.pyplot()
+            # # Calculate sentiment percentages
+            # sentiment_percentages = self.calculate_sentiment_percentages(df)
+            # # Convert sentiment percentages to dataframe
+            # sentiment_percentages_df = pd.DataFrame(sentiment_percentages).transpose()
+            # # Plot sentiment percentages
+            # sentiment_percentages_df.plot(kind='bar', figsize=(10, 6))
+            # plt.xlabel('Politician')
+            # plt.ylabel('Percentage of Sentiments')
+            # plt.title('Sentiments')
+            # plt.xticks(rotation=45)
+            # st.pyplot()
 
-            # Find the highest tweet count and plot it
-            self.find_user_with_highest_tweet_count(df)
-            # Display sentiment percentages dataframe
-            st.write('### Sentiment Percentages')
-            st.dataframe(sentiment_percentages_df)
+            # # Find the highest tweet count and plot it
+            # self.find_user_with_highest_tweet_count(df)
+            # # Display sentiment percentages dataframe
+            # st.write('### Sentiment Percentages')
+            # st.dataframe(sentiment_percentages_df)
 
-            # Find most active politician
-            st.write(f"#### Most Active Politician: {most_active_politician} with {num_tweets} tweets")
-            # Find most patriotic politician
-            most_patriotic_politician, patriotic_count = self.find_most_patriotic_politician(df)
+            # # Find most active politician
+            # st.write(f"#### Most Active Politician: {most_active_politician} with {num_tweets} tweets")
+            # # Find most patriotic politician
+            # most_patriotic_politician, patriotic_count = self.find_most_patriotic_politician(df)
 
-            if most_patriotic_politician:
-                st.write(f"#### Most Patriotic Politician: {most_patriotic_politician}")
-                # st.write(f"### Positive Sentiment Mentions: {patriotic_count}")
-            else:
-                st.write("No positive sentiment mentions found.")
+            # if most_patriotic_politician:
+            #     st.write(f"#### Most Patriotic Politician: {most_patriotic_politician}")
+            #     # st.write(f"### Positive Sentiment Mentions: {patriotic_count}")
+            # else:
+            #     st.write("No positive sentiment mentions found.")
 
-            # Detect politicians inciting agitation
+            # # Detect politicians inciting agitation
+            # # agitating_politicians = self.analyze_tweets_for_agitation(df)
             # agitating_politicians = self.analyze_tweets_for_agitation(df)
-            agitating_politicians = self.analyze_tweets_for_agitation(df)
 
-            # Display politicians inciting agitation in a table
-            st.write("### Politicians Inciting Agitation:")
-            agitating_table_data = []
-            for politician, data in agitating_politicians.items():
-                keywords = ", ".join(data['keywords'])
-                frequency = data['count']
-                agitating_table_data.append((politician, keywords, frequency))
+            # # Display politicians inciting agitation in a table
+            # st.write("### Politicians Inciting Agitation:")
+            # agitating_table_data = []
+            # for politician, data in agitating_politicians.items():
+            #     keywords = ", ".join(data['keywords'])
+            #     frequency = data['count']
+            #     agitating_table_data.append((politician, keywords, frequency))
 
-            st.table(pd.DataFrame(agitating_table_data, columns=['Politician', 'Agitation Keywords', 'Keyword Frequency']))
-            # Call the function to find the politicians
-            # Usage example
-            most_constructive, most_destructive = self.most_constructive_and_destructive(df, self.constructive_words, self.destructive_words)
-            st.write("### Most Constructive Politician:", most_constructive)
-            st.write("### Most Destructive Politician:", most_destructive)
+            # st.table(pd.DataFrame(agitating_table_data, columns=['Politician', 'Agitation Keywords', 'Keyword Frequency']))
+            # # Call the function to find the politicians
+            # # Usage example
+            # most_constructive, most_destructive = self.most_constructive_and_destructive(df, self.constructive_words, self.destructive_words)
+            # st.write("### Most Constructive Politician:", most_constructive)
+            # st.write("### Most Destructive Politician:", most_destructive)
             
-            st.write("## Politician words for each others.")
-            # Print the dataframe with topics assigned
-            st.dataframe(df_with_topics[['username', 'top_topic_words']])
-            st.write("## Behavior Analysis via Sentiments:")
-            self.plot_sentiments_by_politician(df)
+            # st.write("## Politician words for each others.")
+            # # Print the dataframe with topics assigned
+            # st.dataframe(df_with_topics[['username', 'top_topic_words']])
+            # st.write("## Behavior Analysis via Sentiments:")
+            # self.plot_sentiments_by_politician(df)
 
-            # Plot word clouds for each user
-            st.write("## Word Clouds for Each User")
-            self.generate_wordclouds_for_each_user(df)
+            # # Plot word clouds for each user
+            # st.write("## Word Clouds for Each User")
+            # self.generate_wordclouds_for_each_user(df)
 # =====================================================================================================
 # ================================================================================================================================
 class TopicModelingAnalyzer:
